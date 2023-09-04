@@ -1,0 +1,5 @@
+.DS_Store
+__pycache__
+Data/.DS_Store
+Fitting_coefficients/.DS_Store
+Parameters_to_fit/.DS_Store
