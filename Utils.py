@@ -28,11 +28,11 @@ def load_data(dataset_type):
 
     # Load and package the data
     data_dir = 'Parameters_to_fit'
-    data = pd.read_csv(os.path.join(data_dir, f'Parameters_aligned-spins.csv'))
+    if('non-spinning' in dataset_type): data = pd.read_csv(os.path.join(data_dir, f'Parameters_non-spinning.csv'))
+    else                              : data = pd.read_csv(os.path.join(data_dir, f'Parameters_aligned-spins-equal-mass.csv'))
 
     # Filter the data, accounting for roundoffs
     if('equal-mass'   in dataset_type): data = data[data['q']>0.98]
-    if('non-spinning' in dataset_type): data = data[(np.abs(data['chi1z'])< 1e-3) & (np.abs(data['chi2z'])< 1e-3)]
     
     return data
 
