@@ -10,7 +10,7 @@ from Plots import plot_results
 
 # Dataset and quantities to fit 
 quantities_to_fit    = ['A_peak22', 'omega_peak22', 'Mf', 'af']    
-dataset_types        = ['non-spinning-equal-mass'] # Available options: ['non-spinning-equal-mass', 'non-spinning']
+dataset_types        = ['non-spinning-equal-mass'] # Available options: ['non-spinning-equal-mass', 'non-spinning', 'aligned-spins-equal-mass']
 
 # Additional flags
 single_catalog       = None # Available options: ['RIT', 'SXS', 'ET']

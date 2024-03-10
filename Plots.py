@@ -72,7 +72,8 @@ def label_mapping(param, qc_norm=0):
     elif(param=='Heff_til'       ): label = r'$\hat{E}_{\mathrm{eff}}^{\rm mrg}$'
     elif(param=='Jmrg_til'       ): label = r'$j_{\rm mrg}$'
     elif(param=='nu'             ): label = r'$\nu$'
-    elif(param=='ecc'            ): label = r'$e_0$'      
+    elif(param=='ecc'            ): label = r'$e_0$'  
+    elif(param=='chieff'         ): label = r'$\chi_{\rm eff}$'     
     else                          : label = param
 
     return label
@@ -163,19 +164,27 @@ def plot_3D_fit(fitting_quantities_dict, quantity_to_fit, dataframe, template_mo
     cb1 = fig.colorbar(p, orientation='horizontal',fraction=0.038, pad=0.0)
     cb1.set_label(label = r'$\mathrm{Residuals} \,( \% )$', fontsize=int(fontsize_labels*0.8))
 
-    if(fitting_quantity_name_1=='nu' or fitting_quantity_name_2=='nu'): 
+    if(dataset_type=='aligned-spins-equal-mass'): 
 
-        if(  quantity_to_fit=='A_peak22'    ): ax.view_init(azim=-139, elev=19)
-        elif(quantity_to_fit=='omega_peak22'): ax.view_init(azim=-146, elev=22)
-        elif(quantity_to_fit=='Mf'          ): ax.view_init(azim=-145, elev=19)
-        elif(quantity_to_fit=='af'          ): ax.view_init(azim=-145, elev=19)
+        if(  quantity_to_fit=='A_peak22'    ): ax.view_init(azim=-111, elev=17)
+        elif(quantity_to_fit=='omega_peak22'): ax.view_init(azim=-115, elev=17)
+        elif(quantity_to_fit=='Mf'          ): ax.view_init(azim= -62, elev=20)
+        elif(quantity_to_fit=='af'          ): ax.view_init(azim= -71, elev=19)
 
     else:
+        if(fitting_quantity_name_1=='nu' or fitting_quantity_name_2=='nu'): 
 
-        if(  quantity_to_fit=='A_peak22'    ): ax.view_init(azim=-36,  elev=20)
-        elif(quantity_to_fit=='omega_peak22'): ax.view_init(azim=-40,  elev=22)
-        elif(quantity_to_fit=='Mf'          ): ax.view_init(azim=-161, elev=15)
-        elif(quantity_to_fit=='af'          ): ax.view_init(azim=-158, elev=15)
+            if(  quantity_to_fit=='A_peak22'    ): ax.view_init(azim=-139, elev=19)
+            elif(quantity_to_fit=='omega_peak22'): ax.view_init(azim=-146, elev=22)
+            elif(quantity_to_fit=='Mf'          ): ax.view_init(azim=-145, elev=19)
+            elif(quantity_to_fit=='af'          ): ax.view_init(azim=-145, elev=19)
+
+        else:
+
+            if(  quantity_to_fit=='A_peak22'    ): ax.view_init(azim=-36,  elev=20)
+            elif(quantity_to_fit=='omega_peak22'): ax.view_init(azim=-40,  elev=22)
+            elif(quantity_to_fit=='Mf'          ): ax.view_init(azim=-161, elev=15)
+            elif(quantity_to_fit=='af'          ): ax.view_init(azim=-158, elev=15)
 
     plt.savefig(f'Plots/{fitting_quantity_name_1}_{fitting_quantity_name_2}_{quantity_to_fit}_{dataset_type}_{catalogs_string}_{template_model}_{fit_dim}.pdf', bbox_inches='tight')
 
@@ -224,27 +233,29 @@ def plot_2D_fit(fitting_quantities_dict, quantity_to_fit, dataframe, template_mo
     ax1.get_shared_x_axes().join(ax1, ax2)
     ax1.set_xticklabels([])
 
-    if('b_massless' in fitting_quantity_name):
-        # Paper plot lims for right side of Fig.1
-        ax1.set_xlim([1.78,3.47])
-        if(  quantity_to_fit=='A_peak22'    ): 
-            ax1.set_ylim([0.47,1.28])
-            ax2.set_ylim([-5, 5])
-        elif(quantity_to_fit=='omega_peak22'): 
-            ax1.set_ylim([0.5,1.2 ])
-            ax2.set_ylim([-14, 14])
+    if not('aligned-spins' in dataset_type):
 
-    elif(fitting_quantity_name=='Heff_til'):
-        ax1.set_xlim([0.86,0.973])
-        if(quantity_to_fit=='Mf'): 
-            ax1.set_ylim([0.984,1.05])
-            ax2.set_ylim([-1.5, 1.5])
-    elif(fitting_quantity_name=='Jmrg_til'):
-        ax1.set_xlim([1.72,3.25])
-        if(quantity_to_fit=='af'): 
-            ax1.set_ylim([0.6,1.15])
-            ax2.set_yticks(ax2.get_yticks()[:-1])
-            ax2.set_ylim([-5, 5])     
+        if('b_massless' in fitting_quantity_name):
+            # Paper plot lims for right side of Fig.1
+            ax1.set_xlim([1.78,3.47])
+            if(  quantity_to_fit=='A_peak22'    ): 
+                ax1.set_ylim([0.47,1.28])
+                ax2.set_ylim([-5, 5])
+            elif(quantity_to_fit=='omega_peak22'): 
+                ax1.set_ylim([0.5,1.2 ])
+                ax2.set_ylim([-14, 14])
+
+        elif(fitting_quantity_name=='Heff_til'):
+            ax1.set_xlim([0.86,0.973])
+            if(quantity_to_fit=='Mf'): 
+                ax1.set_ylim([0.984,1.05])
+                ax2.set_ylim([-1.5, 1.5])
+        elif(fitting_quantity_name=='Jmrg_til'):
+            ax1.set_xlim([1.72,3.25])
+            if(quantity_to_fit=='af'): 
+                ax1.set_ylim([0.6,1.15])
+                ax2.set_yticks(ax2.get_yticks()[:-1])
+                ax2.set_ylim([-5, 5])     
 
     plt.subplots_adjust(wspace=0, hspace=0)
     plt.savefig(f'Plots/{fitting_quantity_name}_{quantity_to_fit}_{dataset_type}_{catalogs_string}_{template_model}_{fit_dim}.pdf', bbox_inches='tight')

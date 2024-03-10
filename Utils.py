@@ -28,10 +28,12 @@ def load_data(dataset_type):
 
     # Load and package the data
     data_dir = 'Parameters_to_fit'
-    data = pd.read_csv(os.path.join(data_dir, f'Parameters_non-spinning.csv'))
-    # Remove data with q<0.98 for non-spinning equal-mass case, accounting for ET roundoff
-    if(dataset_type=='non-spinning-equal-mass'): data = data[data['q']>0.98]       
+    data = pd.read_csv(os.path.join(data_dir, f'Parameters_aligned-spins.csv'))
 
+    # Filter the data, accounting for roundoffs
+    if('equal-mass'   in dataset_type): data = data[data['q']>0.98]
+    if('non-spinning' in dataset_type): data = data[(np.abs(data['chi1z'])< 1e-3) & (np.abs(data['chi2z'])< 1e-3)]
+    
     return data
 
 def merge_with_RWZ_data(data):
@@ -85,19 +87,26 @@ def select_fitting_quantities(dataset_type, quantity_to_fit):
     elif(quantity_to_fit=='Mf'          ): fitting_quantities_base_list = ['Heff_til'       , 'Heff_til-Jmrg_til'      ]
     elif(quantity_to_fit=='af'          ): fitting_quantities_base_list = ['Jmrg_til'       , 'Heff_til-Jmrg_til'      ]
 
-    # In case we are fitting non-equal mass data, add nu-dependence to each fitting quantity.
-    if(dataset_type=='non-spinning'):
-        fitting_quantities_strings_list = []
+    fitting_quantities_strings_list = []
+    # In case we are fitting non-equal mass data, add nu-dependence to each fitting quantity
+    if not('equal-mass' in dataset_type):
         for fx in fitting_quantities_base_list: fitting_quantities_strings_list.append('nu-'+fx)
     else: fitting_quantities_strings_list = fitting_quantities_base_list
+    # In case we are fitting aligned-spin data, add chi_eff-dependence to each fitting quantity
+    if('aligned-spins' in dataset_type):
+        fitting_quantities_strings_list_tmp = []
+        for fx in fitting_quantities_strings_list: 
+            fitting_quantities_strings_list_tmp.append('chieff-'+fx)
+        fitting_quantities_strings_list = fitting_quantities_strings_list_tmp
 
     return fitting_quantities_strings_list
 
 def select_template_model(dataset_type):
 
     # The factorised model applies only to the unequal mass case
-    if  (dataset_type=='non-spinning-equal-mass'): template_model = 'rational'
-    elif(dataset_type=='non-spinning'           ): template_model = 'factorised-nu'
+    if  (dataset_type=='non-spinning-equal-mass' ): template_model = 'rational'
+    elif(dataset_type=='aligned-spins-equal-mass'): template_model = 'rational'
+    elif(dataset_type=='non-spinning'            ): template_model = 'factorised-nu'
 
     return template_model
 
