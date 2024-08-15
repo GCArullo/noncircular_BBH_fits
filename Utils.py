@@ -24,16 +24,23 @@ def select_catalogs(single_catalog, data, add_RWZ_data_flag, dataset_type, quant
 
     return catalogs, data
 
-def load_data(dataset_type):
+def load_data(dataset_type, ringdown_data):
 
-    # Load and package the data
+    if(ringdown_data): tag_append = '_plus_ringdown'
+    else             : tag_append = ''
+
     data_dir = 'Parameters_to_fit'
-    if('non-spinning' in dataset_type): data = pd.read_csv(os.path.join(data_dir, f'Parameters_non-spinning.csv'))
-    else                              : data = pd.read_csv(os.path.join(data_dir, f'Parameters_aligned-spins-equal-mass.csv'))
+
+    # Load the data
+    if(ringdown_data): 
+        data = pd.read_csv(os.path.join(data_dir, f'Parameters_non-spinning{tag_append}.csv'))
+    else:
+        if('non-spinning' in dataset_type): data = pd.read_csv(os.path.join(data_dir, f'Parameters_non-spinning.csv'))
+        else                              : data = pd.read_csv(os.path.join(data_dir, f'Parameters_aligned-spins-equal-mass.csv'))
 
     # Filter the data, accounting for roundoffs
     if('equal-mass'   in dataset_type): data = data[data['q']>0.98]
-    
+
     return data
 
 def merge_with_RWZ_data(data):
@@ -82,13 +89,27 @@ def add_RWZ_data(dataset_type, quantity_to_fit, data, catalogs):
 
 def select_fitting_quantities(dataset_type, quantity_to_fit):
 
-    if  (quantity_to_fit=='A_peak22'    ): fitting_quantities_base_list = ['b_massless_EOB' , 'Heff_til-b_massless_EOB']
-    elif(quantity_to_fit=='omega_peak22'): fitting_quantities_base_list = ['b_massless_EOB' , 'Heff_til-b_massless_EOB']
-    elif(quantity_to_fit=='Mf'          ): fitting_quantities_base_list = ['Heff_til'       , 'Heff_til-Jmrg_til'      ]
-    elif(quantity_to_fit=='af'          ): fitting_quantities_base_list = ['Jmrg_til'       , 'Heff_til-Jmrg_til'      ]
+    if  (quantity_to_fit=='A_peak22'                     ): fitting_quantities_base_list = ['b_massless_EOB', 'Heff_til-b_massless_EOB']
+    elif(quantity_to_fit=='omega_peak22'                 ): fitting_quantities_base_list = ['b_massless_EOB', 'Heff_til-b_massless_EOB']
+    elif(quantity_to_fit=='Mf'                           ): fitting_quantities_base_list = ['Heff_til'      , 'Heff_til-Jmrg_til'      ]
+    elif(quantity_to_fit=='af'                           ): fitting_quantities_base_list = ['Jmrg_til'      , 'Heff_til-Jmrg_til'      ]
+
+    # KerrBinary
+    elif(quantity_to_fit==  'A_220_from_22_220_median_ta'     or \
+         quantity_to_fit==  'A_330_from_33_330_median_ta'     or \
+         quantity_to_fit==  'A_210_from_21_210_median_ta'     or \
+         quantity_to_fit==  'A_440_from_44_440_median_ta'     or \
+         quantity_to_fit==  'A_320_from_32_320_220_median_ta' or \
+         quantity_to_fit==  'A_200_from_20_200_median_ta'     or \
+         quantity_to_fit=='phi_220_from_22_220_median_ta'     or \
+         quantity_to_fit=='phi_330_from_33_330_median_ta'     or \
+         quantity_to_fit=='phi_210_from_21_210_median_ta'     or \
+         quantity_to_fit=='phi_440_from_44_440_median_ta'     or \
+         quantity_to_fit=='phi_320_from_32_320_220_median_ta' or \
+         quantity_to_fit=='phi_200_from_20_200_median_ta'        ): fitting_quantities_base_list = ['b_massless_EOB', 'Heff_til-b_massless_EOB']
 
     fitting_quantities_strings_list = []
-    # In case we are fitting non-equal mass data, add nu-dependence to each fitting quantity
+    # In case we are fitting non-equal mass data, add nu-dependence to each fitting quantity, if using non-factorised
     if not('equal-mass' in dataset_type):
         for fx in fitting_quantities_base_list: fitting_quantities_strings_list.append('nu-'+fx)
     else: fitting_quantities_strings_list = fitting_quantities_base_list
@@ -101,12 +122,12 @@ def select_fitting_quantities(dataset_type, quantity_to_fit):
 
     return fitting_quantities_strings_list
 
-def select_template_model(dataset_type):
+def select_template_model(dataset_type, ringdown_data):
 
-    # The factorised model applies only to the unequal mass case
-    if  (dataset_type=='non-spinning-equal-mass' ): template_model = 'rational'
-    elif(dataset_type=='aligned-spins-equal-mass'): template_model = 'rational'
-    elif(dataset_type=='non-spinning'            ): template_model = 'factorised-nu'
+    if(ringdown_data)                   : template_model = 'rational'
+    else                                :
+        if('equal-mass' in dataset_type): template_model = 'rational'
+        else                            : template_model = 'factorised-nu'
 
     return template_model
 
@@ -156,7 +177,7 @@ def template(coeffs, fitting_quantities_dict, template_model='rational'):
 
 def read_fit_coefficients(quantity_to_fit, fitting_quantities_dict, fitting_quantities_string, dataset_type, catalogs_string, template_model, fit_dim):
 
-    print(f'* Post-processing `{quantity_to_fit}` fit in terms of {list(fitting_quantities_dict.keys())}, trained on {dataset_type} simulations with the catalogs {catalogs_string}.\n')
+    print(f'* Post-processing `{quantity_to_fit}` fit in terms of {list(fitting_quantities_dict.keys())}, trained on {dataset_type} simulations with the catalogs: {catalogs_string}.\n')
 
     coeffs_dir = 'Fitting_coefficients'
     coeffs = pd.read_csv(os.path.join(coeffs_dir, f'Fitting_coefficients_{dataset_type}_{catalogs_string}_{template_model}_{fit_dim}_{fitting_quantities_string}_{quantity_to_fit}.csv'))['coeffs']
@@ -164,3 +185,62 @@ def read_fit_coefficients(quantity_to_fit, fitting_quantities_dict, fitting_quan
     coeffs = np.array(coeffs)
 
     return coeffs
+
+def set_qc_name(quantity_to_fit):
+
+    if('median_ta' in quantity_to_fit): name_qc = quantity_to_fit.replace('median_ta', 'qc')
+    else                              : name_qc = quantity_to_fit+'_qc'
+
+    return name_qc
+
+def set_actual_quantity_to_fit(data, quantity_to_fit, dataset_type):
+
+    # Define the qc name
+    name_qc = set_qc_name(quantity_to_fit)
+
+    # Odd m modes have zero amplitude in the equal mass limit. Remove them from the fit.
+    if('210' in quantity_to_fit or '330' in quantity_to_fit): data = data[data['q']<0.98]
+
+    # Normalise the amplitude wrt the qc value
+    if not('phi' in quantity_to_fit): data[quantity_to_fit] = data[quantity_to_fit]/data[name_qc]
+        
+    # Define the phase wrt the 220 arbitrary phase, wrt the qc value and unwrap it
+    else                            : 
+        m_int = int(quantity_to_fit.split('_')[1][1])
+        data[quantity_to_fit] = np.unwrap(2.* data[quantity_to_fit] - m_int * data['phi_220_from_22_220_median_ta'] - data[name_qc])
+
+        # Manually add unwrapping needed for the phase.
+        # Alternative to this manual shift, phase wrapper in 3D: https://github.com/geggo/phase-unwrap?tab=readme-ov-file
+        data = add_manual_unwrap(data, quantity_to_fit, dataset_type)
+
+    return data
+
+def add_manual_unwrap(data, quantity_to_fit, dataset_type):
+
+    if(  quantity_to_fit=='phi_330_from_33_330_median_ta'):                        
+        data[quantity_to_fit] += (2.*np.pi)
+    elif(quantity_to_fit=='phi_210_from_21_210_median_ta'):                        
+        data[quantity_to_fit][data[quantity_to_fit]<-1.8] += 2.*np.pi
+    elif(quantity_to_fit=='phi_440_from_44_440_median_ta'): 
+        if(dataset_type=='non-spinning-equal-mass'       ): data[quantity_to_fit] += (2.*np.pi)
+        elif(dataset_type=='non-spinning'                ): 
+            data[quantity_to_fit][data[quantity_to_fit]<-10] += (2.*np.pi)*2
+            data[quantity_to_fit][data[quantity_to_fit]>10]  -= (2.*np.pi)*2
+            data[quantity_to_fit][data[quantity_to_fit]<0]   += (2.*np.pi)*2
+            data[quantity_to_fit][data[quantity_to_fit]>3]   -= (2.*np.pi)*2
+            data[quantity_to_fit] += (2.*np.pi)*2
+            data[quantity_to_fit][data[quantity_to_fit]>9]   -= (2.*np.pi)
+            data[quantity_to_fit][data[quantity_to_fit]>9]   -= (2.*np.pi)
+            data[quantity_to_fit]                            -= (2.*np.pi)
+    elif(quantity_to_fit=='phi_320_from_32_320_220_median_ta'): 
+            data[quantity_to_fit]                             += (2.*np.pi)*2
+            data[quantity_to_fit][data[quantity_to_fit]>11.0] -= (2.*np.pi)
+            data[quantity_to_fit][data[quantity_to_fit]< 4  ] += (2.*np.pi)
+            data[quantity_to_fit][data[quantity_to_fit]< 5.6] += (2.*np.pi)
+            data[quantity_to_fit][data[quantity_to_fit]>11.0] -= (2.*np.pi)
+            data[quantity_to_fit][data[quantity_to_fit]< 6.0] += (2.*np.pi)
+            data[quantity_to_fit][data[quantity_to_fit]>11.0] -= (2.*np.pi)
+            data[quantity_to_fit][(data['nu']<0.21) & (data[quantity_to_fit]>9.0)] -= (2.*np.pi)
+            data[quantity_to_fit][(data['b_massless_EOB']>3.2) & (data[quantity_to_fit]>10.0)] -= (2.*np.pi)
+    
+    return data

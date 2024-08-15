@@ -65,18 +65,34 @@ def label_mapping(param, qc_norm=0):
     elif(param=='af'          ): 
         if(qc_norm): label = r'$a_f \, / \, a_f^{qc}$'
         else       : label = r'$a_f$'
-    elif(param=='b_massless'     ): label = r'$b^{E}_{\mathrm{mrg}}$'
-    elif(param=='b_massless_Heff'): label = r'$b_{\mathrm{mrg}}$'
-    elif(param=='b_massless_EOB' ): label = r'$\hat{b}_{\mathrm{mrg}}$'
-    elif(param=='Emrg_til'       ): label = r'$\tilde{E}_{\rm mrg}$'
-    elif(param=='Heff_til'       ): label = r'$\hat{E}_{\mathrm{eff}}^{\rm mrg}$'
-    elif(param=='Jmrg_til'       ): label = r'$j_{\rm mrg}$'
-    elif(param=='nu'             ): label = r'$\nu$'
-    elif(param=='ecc'            ): label = r'$e_0$'  
-    elif(param=='chieff'         ): label = r'$\chi_{\rm eff}$'     
-    else                          : label = param
+
+    elif(param=='b_massless'                       ): label = r'$b^{E}_{\mathrm{mrg}}$'
+    elif(param=='b_massless_Heff'                  ): label = r'$b_{\mathrm{mrg}}$'
+    elif(param=='b_massless_EOB'                   ): label = r'$\hat{b}_{\mathrm{mrg}}$'
+    elif(param=='Emrg_til'                         ): label = r'$\tilde{E}_{\rm mrg}$'
+    elif(param=='Heff_til'                         ): label = r'$\hat{E}_{\mathrm{eff}}^{\rm mrg}$'
+    elif(param=='Jmrg_til'                         ): label = r'$j_{\rm mrg}$'
+    elif(param=='nu'                               ): label = r'$\nu$'
+    elif(param=='ecc'                              ): label = r'$e_0$' 
+    elif(param=='ecc_gi'                           ): label = r'$e_{\rm gw}$'          
+    elif(param=='chieff'                           ): label = r'$\chi_{\rm eff}$' 
+
+    elif(param==  'A_220_from_22_220_median_ta'    ): label = r'$\hat{A}_{220}$'
+    elif(param==  'A_210_from_21_210_median_ta'    ): label = r'$\hat{A}_{210}$'
+    elif(param==  'A_330_from_33_330_median_ta'    ): label = r'$\hat{A}_{330}$'
+    elif(param==  'A_440_from_44_440_median_ta'    ): label = r'$\hat{A}_{440}$'
+    elif(param==  'A_320_from_32_320_220_median_ta'): label = r'$\hat{A}_{320}$'
+    elif(param==  'A_200_from_20_200_median_ta'    ): label = r'$\hat{A}_{200}$'
+    elif(param=='phi_210_from_21_210_median_ta'    ): label = r'$\hat{\phi}_{210}$'
+    elif(param=='phi_330_from_33_330_median_ta'    ): label = r'$\hat{\phi}_{330}$'
+    elif(param=='phi_440_from_44_440_median_ta'    ): label = r'$\hat{\phi}_{440}$'
+    elif(param=='phi_320_from_32_320_220_median_ta'): label = r'$\hat{\phi}_{320}$'
+    elif(param=='phi_200_from_20_200_median_ta'    ): label = r'$\hat{\phi}_{200}$'
+
+    else                                            : label = param
 
     return label
+
 
 def plot_residuals_histogram(fitting_quantities_dict, quantity_to_fit, data, template_model, fit_dim, coeffs, dataset_type, catalogs_string, fitting_quantities_string):
 
@@ -88,7 +104,12 @@ def plot_residuals_histogram(fitting_quantities_dict, quantity_to_fit, data, tem
     label_pad_size  = 12
 
     fitting_model_data = template(coeffs, fitting_quantities_dict, template_model)
-    residuals          = 100*(fitting_model_data - data[quantity_to_fit])/data[quantity_to_fit]
+    if('phi' in quantity_to_fit): 
+        residuals = fitting_model_data - data[quantity_to_fit]
+        res_lab   = ' [rad]'
+    else                        : 
+        residuals = 100*(fitting_model_data - data[quantity_to_fit])/data[quantity_to_fit]
+        res_lab   = ' [%]'
 
     fig, ax = plt.subplots(1, 1, figsize=(8, 6))
     sns.histplot(residuals, alpha=0.5, ax=ax)
@@ -97,6 +118,81 @@ def plot_residuals_histogram(fitting_quantities_dict, quantity_to_fit, data, tem
     ax.grid(True, linestyle='--', linewidth=1, alpha=0.5)
     plt.tight_layout()
     plt.savefig(f'Plots/Residuals_{fitting_quantities_string}_{quantity_to_fit}_{dataset_type}_{catalogs_string}_{template_model}_{fit_dim}.pdf', bbox_inches='tight')
+
+    return
+
+def plot_4D_fit(fitting_quantities_dict, quantity_to_fit, dataframe, template_model, fit_dim, coeffs, dataset_type, catalogs_string):
+
+    init_plotting()
+
+    markers_size    = 14
+    cmap            = mpl.cm.inferno
+    fontsize_labels = 22
+    label_pad_size  = 12
+
+    fitting_quantity_name_1 = list(fitting_quantities_dict.keys())[0]
+    fitting_quantity_name_2 = list(fitting_quantities_dict.keys())[1]
+    fitting_quantity_name_3 = list(fitting_quantities_dict.keys())[2]
+
+    fitting_quantity1_grid_1d                                              = np.linspace(np.min(dataframe[fitting_quantity_name_1]), np.max(dataframe[fitting_quantity_name_1]), 100)
+    fitting_quantity2_grid_1d                                              = np.linspace(np.min(dataframe[fitting_quantity_name_2]), np.max(dataframe[fitting_quantity_name_2]), 100)
+    fitting_quantity3_grid_1d                                              = np.linspace(np.min(dataframe[fitting_quantity_name_3]), np.max(dataframe[fitting_quantity_name_3]), 100)
+    fitting_quantity1_grid, fitting_quantity2_grid, fitting_quantity3_grid = np.meshgrid(fitting_quantity1_grid_1d, fitting_quantity2_grid_1d, fitting_quantity3_grid_1d)
+    fitting_quantities_grid_dict                                           = {fitting_quantity_name_1: fitting_quantity1_grid, fitting_quantity_name_2: fitting_quantity2_grid, fitting_quantity_name_3: fitting_quantity3_grid}
+    
+    fitting_model_grid = template(coeffs, fitting_quantities_grid_dict, template_model)
+    fitting_model_data = template(coeffs, fitting_quantities_dict     , template_model)
+
+    if('phi' in quantity_to_fit): 
+        dataframe['residuals'] = fitting_model_data - dataframe[quantity_to_fit]
+        res_lab   = ' [rad]'
+    else                        : 
+        dataframe['residuals'] = 100*(fitting_model_data - dataframe[quantity_to_fit])/dataframe[quantity_to_fit]
+        res_lab   = ' [%]'
+
+    size_increase = 1.1
+
+    # Create colorbar with all catalogs values, below plot one by one
+    fig_tmp = plt.figure(figsize=(12*size_increase,7*size_increase))
+    ax_tmp  = fig_tmp.add_subplot(111, projection='3d')
+    p       = ax_tmp.scatter(dataframe[fitting_quantity_name_1], dataframe[fitting_quantity_name_2], dataframe[fitting_quantity_name_3], c=dataframe[quantity_to_fit], s=markers_size*2.0, marker = '.', cmap=cmap, zorder=-1)
+    plt.close()
+
+    fig = plt.figure(figsize=(12*size_increase,7*size_increase))
+    ax  = fig.add_subplot(111, projection='3d')
+
+    # White box
+    ax.xaxis.pane.fill = False
+    ax.yaxis.pane.fill = False
+    ax.zaxis.pane.fill = False
+
+    stride = 15
+
+    # Loop over catalogs and corresponding markers
+    for catalog, marker in zip(['RIT', 'SXS', 'ET', 'RWZ'], ['.', 'x', 's', '^']):
+
+        dataframe_x = dataframe[dataframe['catalog']==catalog]
+        if(marker=='.'): size_increase_marker = 7.0
+        else           : size_increase_marker = 2.0
+        ax.scatter(dataframe_x[fitting_quantity_name_1], dataframe_x[fitting_quantity_name_2], dataframe_x[fitting_quantity_name_3], c=dataframe_x[quantity_to_fit], s=markers_size*size_increase_marker, marker = marker, cmap=cmap, zorder=-1)
+
+    ax.set_xlabel(label_mapping(fitting_quantity_name_1), fontsize=fontsize_labels, labelpad=label_pad_size)
+    ax.set_ylabel(label_mapping(fitting_quantity_name_2), fontsize=fontsize_labels, labelpad=label_pad_size)
+    ax.set_zlabel(label_mapping(fitting_quantity_name_3), fontsize=fontsize_labels, labelpad=label_pad_size, rotation=90)
+
+    plt.rcParams['mathtext.fontset']  = 'stix'
+    plt.rcParams['font.family']       = 'STIXGeneral'
+
+    if('phi' in quantity_to_fit): label_bar = label_mapping(quantity_to_fit, qc_norm=1) + res_lab
+    else                        : label_bar = label_mapping(quantity_to_fit, qc_norm=1)
+
+    # Plot colorbar at the bottom of the plot
+    cb1 = fig.colorbar(p, pad=0.0, ax=ax, orientation='horizontal', shrink=0.4)
+    cb1.set_label(label = label_bar, fontsize=int(fontsize_labels*0.8))
+
+    ax.view_init(azim=-38, elev=17)
+
+    plt.savefig(f'Plots/{fitting_quantity_name_1}_{fitting_quantity_name_2}_{fitting_quantity_name_3}_{quantity_to_fit}_{dataset_type}_{catalogs_string}_{template_model}_{fit_dim}.pdf', bbox_inches='tight')
 
     return
 
@@ -117,9 +213,15 @@ def plot_3D_fit(fitting_quantities_dict, quantity_to_fit, dataframe, template_mo
     fitting_quantity1_grid, fitting_quantity2_grid = np.meshgrid(fitting_quantity1_grid, fitting_quantity2_grid)
     fitting_quantities_grid_dict                   = {fitting_quantity_name_1: fitting_quantity1_grid, fitting_quantity_name_2: fitting_quantity2_grid}
     
-    fitting_model_grid      = template(coeffs, fitting_quantities_grid_dict, template_model)
-    fitting_model_data      = template(coeffs, fitting_quantities_dict     , template_model)
-    dataframe['residuals']  = 100*(fitting_model_data - dataframe[quantity_to_fit])/dataframe[quantity_to_fit]
+    fitting_model_grid = template(coeffs, fitting_quantities_grid_dict, template_model)
+    fitting_model_data = template(coeffs, fitting_quantities_dict     , template_model)
+
+    if('phi' in quantity_to_fit): 
+        dataframe['residuals'] = fitting_model_data - dataframe[quantity_to_fit]
+        res_lab   = ' [rad]'
+    else                        : 
+        dataframe['residuals'] = 100*(fitting_model_data - dataframe[quantity_to_fit])/dataframe[quantity_to_fit]
+        res_lab   = ' [%]'
 
     size_increase = 1.1
 
@@ -128,7 +230,7 @@ def plot_3D_fit(fitting_quantities_dict, quantity_to_fit, dataframe, template_mo
     p = ax_tmp.scatter(dataframe[fitting_quantity_name_1], dataframe[fitting_quantity_name_2], dataframe[quantity_to_fit], c=dataframe['residuals'], s=markers_size*2.0, marker = '.', cmap=cmap, zorder=-1)
     plt.close()
 
-    fig = plt.figure(figsize=(9*size_increase,7*size_increase))
+    fig = plt.figure(figsize=(12*size_increase,7*size_increase))
     ax  = fig.add_subplot(111, projection='3d')
 
     # White box
@@ -161,33 +263,56 @@ def plot_3D_fit(fitting_quantities_dict, quantity_to_fit, dataframe, template_mo
     plt.rcParams['mathtext.fontset']  = 'stix'
     plt.rcParams['font.family']       = 'STIXGeneral'
 
-    cb1 = fig.colorbar(p, orientation='horizontal',fraction=0.038, pad=0.0)
+    cb1 = fig.colorbar(p, pad=0.0, ax=ax, orientation='horizontal', shrink=0.4)
     cb1.set_label(label = r'$\mathrm{Residuals} \,( \% )$', fontsize=int(fontsize_labels*0.8))
+
+    set_rotation_for_3D_plot(dataset_type, quantity_to_fit, ax, fitting_quantity_name_1, fitting_quantity_name_2)
+
+    plt.savefig(f'Plots/{fitting_quantity_name_1}_{fitting_quantity_name_2}_{quantity_to_fit}_{dataset_type}_{catalogs_string}_{template_model}_{fit_dim}.pdf', bbox_inches='tight')
+
+    return
+
+def set_rotation_for_3D_plot(dataset_type, quantity_to_fit, ax, fitting_quantity_name_1, fitting_quantity_name_2):
 
     if(dataset_type=='aligned-spins-equal-mass'): 
 
-        if(  quantity_to_fit=='A_peak22'    ): ax.view_init(azim=-111, elev=17)
-        elif(quantity_to_fit=='omega_peak22'): ax.view_init(azim=-115, elev=17)
-        elif(quantity_to_fit=='Mf'          ): ax.view_init(azim= -62, elev=20)
-        elif(quantity_to_fit=='af'          ): ax.view_init(azim= -71, elev=19)
+        if(  quantity_to_fit=='A_peak22'                         ): ax.view_init(azim=-111, elev=17)
+        elif(quantity_to_fit=='omega_peak22'                     ): ax.view_init(azim=-115, elev=17)
+        elif(quantity_to_fit=='Mf'                               ): ax.view_init(azim=- 62, elev=20)
+        elif(quantity_to_fit=='af'                               ): ax.view_init(azim=- 71, elev=19)
 
     else:
         if(fitting_quantity_name_1=='nu' or fitting_quantity_name_2=='nu'): 
 
-            if(  quantity_to_fit=='A_peak22'    ): ax.view_init(azim=-139, elev=19)
-            elif(quantity_to_fit=='omega_peak22'): ax.view_init(azim=-146, elev=22)
-            elif(quantity_to_fit=='Mf'          ): ax.view_init(azim=-145, elev=19)
-            elif(quantity_to_fit=='af'          ): ax.view_init(azim=-145, elev=19)
+            if(  quantity_to_fit=='A_peak22'                         ): ax.view_init(azim=-139, elev=19)
+            elif(quantity_to_fit=='omega_peak22'                     ): ax.view_init(azim=-146, elev=22)
+            elif(quantity_to_fit=='Mf'                               ): ax.view_init(azim=-145, elev=19)
+            elif(quantity_to_fit=='af'                               ): ax.view_init(azim=-145, elev=19)
+            elif(quantity_to_fit=='A_220_from_22_220_median_ta'      ): ax.view_init(azim=-139, elev=19)
+            elif(quantity_to_fit=='A_330_from_33_330_median_ta'      ): ax.view_init(azim=-139, elev=19)
+            elif(quantity_to_fit=='A_210_from_21_210_median_ta'      ): ax.view_init(azim=-139, elev=19)
+            elif(quantity_to_fit=='A_440_from_44_440_median_ta'      ): ax.view_init(azim=-162, elev= 9)
+            elif(quantity_to_fit=='A_320_from_32_320_220_median_ta'  ): ax.view_init(azim=-138, elev=20)
+            elif(quantity_to_fit=='phi_330_from_33_330_median_ta'    ): ax.view_init(azim=  46, elev=18)
+            elif(quantity_to_fit=='phi_210_from_21_210_median_ta'    ): ax.view_init(azim=  46, elev=18)
+            elif(quantity_to_fit=='phi_440_from_44_440_median_ta'    ): ax.view_init(azim= -46, elev=11)
+            elif(quantity_to_fit=='phi_200_from_20_200_median_ta'    ): ax.view_init(azim=  46, elev=18)
+            elif(quantity_to_fit=='phi_320_from_32_320_220_median_ta'): ax.view_init(azim= -99, elev= 3)
 
         else:
 
-            if(  quantity_to_fit=='A_peak22'    ): ax.view_init(azim=-36,  elev=20)
-            elif(quantity_to_fit=='omega_peak22'): ax.view_init(azim=-40,  elev=22)
-            elif(quantity_to_fit=='Mf'          ): ax.view_init(azim=-161, elev=15)
-            elif(quantity_to_fit=='af'          ): ax.view_init(azim=-158, elev=15)
-
-    plt.savefig(f'Plots/{fitting_quantity_name_1}_{fitting_quantity_name_2}_{quantity_to_fit}_{dataset_type}_{catalogs_string}_{template_model}_{fit_dim}.pdf', bbox_inches='tight')
-
+            if(  quantity_to_fit=='A_peak22'                         ): ax.view_init(azim=- 36, elev=20)
+            elif(quantity_to_fit=='omega_peak22'                     ): ax.view_init(azim=- 40, elev=22)
+            elif(quantity_to_fit=='Mf'                               ): ax.view_init(azim=-161, elev=15)
+            elif(quantity_to_fit=='af'                               ): ax.view_init(azim=-158, elev=15)
+            elif(quantity_to_fit=='A_220_from_22_220_median_ta'      ): 
+                if(dataset_type=='non-spinning-equal-mass'           ): ax.view_init(azim=- 45, elev=18)
+                else                                                  : ax.view_init(azim=- 36, elev=20)
+            elif(quantity_to_fit=='A_320_from_32_320_220_median_ta'  ): ax.view_init(azim=- 45, elev=18)
+            elif(quantity_to_fit=='A_440_from_44_440_median_ta'      ): ax.view_init(azim=- 45, elev=18)
+            elif(quantity_to_fit=='phi_440_from_44_440_median_ta'    ): ax.view_init(azim=-134, elev= 0)
+            elif(quantity_to_fit=='phi_320_from_32_320_220_median_ta'): ax.view_init(azim=-130, elev= 5)
+    
     return
 
 def plot_2D_fit(fitting_quantities_dict, quantity_to_fit, dataframe, template_model, fit_dim, coeffs, dataset_type, catalogs_string):
@@ -204,30 +329,43 @@ def plot_2D_fit(fitting_quantities_dict, quantity_to_fit, dataframe, template_mo
     fitting_quantity_grid_dict = {fitting_quantity_name: np.linspace(np.min(dataframe[fitting_quantity_name]), np.max(dataframe[fitting_quantity_name]), 100)}
     fitting_model_grid         = template(coeffs, fitting_quantity_grid_dict, template_model)
     fitting_model_data         = template(coeffs, fitting_quantities_dict   , template_model)
-    dataframe['residuals']     = 100*(fitting_model_data - dataframe[quantity_to_fit])/dataframe[quantity_to_fit]
+
+    if('phi' in quantity_to_fit): 
+        dataframe['residuals'] = fitting_model_data - dataframe[quantity_to_fit]
+        res_lab   = ' [rad]'
+    else                        : 
+        dataframe['residuals'] = 100*(fitting_model_data - dataframe[quantity_to_fit])/dataframe[quantity_to_fit]
+        res_lab   = ' [%]'
 
     size_small = 80
     size_big   = 100
 
     # Initialise the figure 
     init_plotting()
-    myfig = plt.figure(figsize=(9*1.1,7*1.1))
+    myfig = plt.figure(figsize=(12*1.1,7*1.1))
     ax1   = plt.subplot2grid((4, 1), (0, 0), rowspan=3)
     ax2   = plt.subplot2grid((4, 1), (3, 0), rowspan=1)
 
     if(quantity_to_fit=='A_peak22'): legend_flag = True
     else:                            legend_flag = False
 
+    label_quantity_list = ['A_peak22', 'b_massless_EOB', 'A_220_from_22_220_median_ta', 'A_440_from_44_440_median_ta']
+
+    if(quantity_to_fit in label_quantity_list): legend_flag = True
+    else                                      : legend_flag = False
+
     # Plot the data and the fit
-    sns.scatterplot(data=dataframe, x=fitting_quantity_name, y=quantity_to_fit, hue="ecc", style="catalog", style_order=['RIT', 'SXS', 'ET'], size="catalog", sizes = {"RIT": size_small, "SXS": size_small, "ET": size_big}, palette=palette_fig, legend=legend_flag, ax=ax1)
+    style_order_list = ['RIT', 'SXS', 'ET']
+    size_dict        = {"RIT": size_small, "SXS": size_small, "ET": size_big}
+    sns.scatterplot(data=dataframe, x=fitting_quantity_name, y=quantity_to_fit, hue="ecc", style="catalog", style_order=style_order_list, size="catalog", sizes = size_dict, palette=palette_fig, legend=legend_flag, ax=ax1)
     ax1.plot(fitting_quantity_grid_dict[fitting_quantity_name], fitting_model_grid, c=color_fit, ls=ls_fit, lw=lw_fit, zorder=-1)
     ax1.grid(alpha=0.2)
 
     ax1.set_ylabel(label_mapping(quantity_to_fit, qc_norm=1), fontsize=size_labels)
     # Plot residuals at the bottom of the plot
-    sns.scatterplot(data=dataframe, x=fitting_quantity_name, y='residuals',     hue="ecc", style="catalog", style_order=['RIT', 'SXS', 'ET'], size="catalog", sizes = {"RIT": size_small, "SXS": size_small, "ET": size_big}, palette=palette_fig, legend=False, ax=ax2)
+    sns.scatterplot(data=dataframe, x=fitting_quantity_name, y='residuals',     hue="ecc", style="catalog", style_order=style_order_list, size="catalog", sizes = size_dict, palette=palette_fig, legend=False, ax=ax2)
     ax2.grid(alpha=0.2)
-    ax2.set_ylabel(r'Res. [%]', fontsize=size_labels)
+    ax2.set_ylabel(r'Res. ' + res_lab, fontsize=size_labels)
     ax2.set_xlabel(label_mapping(fitting_quantity_name), fontsize=size_labels)
     # Finalise the plot
     ax1.get_shared_x_axes().join(ax1, ax2)
@@ -263,9 +401,10 @@ def plot_2D_fit(fitting_quantities_dict, quantity_to_fit, dataframe, template_mo
     return
 
 def plot_results(fitting_quantities_dict, quantity_to_fit, data, template_model, fit_dim, coeffs, dataset_type, catalogs_string, fitting_quantities_string):
-    
+
     if(  len(fitting_quantities_dict.keys())==1): plot_2D_fit(fitting_quantities_dict, quantity_to_fit, data, template_model, fit_dim, coeffs, dataset_type, catalogs_string)
     elif(len(fitting_quantities_dict.keys())==2): plot_3D_fit(fitting_quantities_dict, quantity_to_fit, data, template_model, fit_dim, coeffs, dataset_type, catalogs_string)
-    plot_residuals_histogram(fitting_quantities_dict, quantity_to_fit, data, template_model, fit_dim, coeffs, dataset_type, catalogs_string, fitting_quantities_string)
+    elif(len(fitting_quantities_dict.keys())==3): plot_4D_fit(fitting_quantities_dict, quantity_to_fit, data, template_model, fit_dim, coeffs, dataset_type, catalogs_string)
+    plot_residuals_histogram(fitting_quantities_dict, quantity_to_fit, data, template_model, fit_dim, coeffs, dataset_type, catalogs_string, fitting_quantities_string      )
 
     return
